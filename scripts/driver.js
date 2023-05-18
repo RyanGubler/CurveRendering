@@ -18,9 +18,9 @@ MySample.main = (function(graphics) {
     //------------------------------------------------------------------
     function render() {
         graphics.clear();
-        graphics.drawCurve(0, [[150,500],[500,500],[200,500],[200,200]], 50, true,true,true, "rgb(0, 255, 0)");
+        graphics.drawCurve(graphics.Curve.Hermite, [[150,500],[500,500],[200,400],[200,200]], 50, true,true,true, "rgb(0, 255, 0)");
 
-        graphics.drawCurve(1, [[250,300],[500,300],[400,500],[400,500], [10]], 50, true,true,true, "rgb(255, 0, 0)");
+        graphics.drawCurve(1, [[400,300],[500,300],[700,500],[600,500], [15]], 50, true,true,true, "rgb(255, 0, 0)");
 
     }
 

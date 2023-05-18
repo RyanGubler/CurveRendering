@@ -203,9 +203,8 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
     // Renders an Hermite curve based on the input parameters.
     //
     //------------------------------------------------------------------
-
+    
     function drawCurveHermite(controls, segments, showPoints, showLine, showControl, lineColor) {
-        let u = 0;
         let p0_x = controls[0][0];
         let p1_x = controls[1][0];
         let p0_y = controls[0][1];
@@ -216,7 +215,11 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         let prime1_y = controls[3][1];
         let tempX = p0_x;
         let tempY = p0_y;
-        while(u <= 1){
+        if(showControl){
+            drawLine(p0_x, p0_y, p0_x + prime0_x, prime0_y, 'cyan');
+            drawLine(p1_x, p1_y, p1_x + prime1_x, p1_y + prime1_y, 'cyan')
+        }
+        let compute = function(u){
             let xu = p0_x * (2 * u**3 - 3 * u ** 2 + 1) + p1_x * (-2 * u**3 + 3 * u**2) + prime0_x * (u**3 - 2 * u**2 + u) + prime1_x * (u**3 - u**2);
             let yu = p0_y * (2 * u**3 - 3 * u ** 2 + 1) + p1_y * (-2 * u**3 + 3 * u**2) + prime0_y * (u**3 - 2 * u**2 + u) + prime1_y * (u**3 - u**2);
             if(showPoints){
@@ -225,12 +228,21 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
             if(showLine && u > 0){
                 drawLine(tempX, tempY, xu, yu, lineColor);
             }
-            // if(showControl){
-            //     drawPoint(controlX0, controlY0, 'white');
-            //     drawLine(xu, yu, controlX0, controlY0, 'orange');
-            // }
             tempX = xu;
             tempY = yu;
+        }
+        let memoizeHermite = function(){
+            let memo = [];
+            return function (u){
+                if(memo[u] === undefined){
+                    memo[u] = compute(u)
+                }
+                return memo[u];
+            };
+        }();
+        let u = 0;
+        while(u <= 1){
+            memoizeHermite(u);
             u += 1 / segments
         }
     }
@@ -254,6 +266,10 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         let pkPlus2Y = controls[3][1];
         let tempX = pkX;
         let tempY = pkY;
+        if(showControl){
+            drawPoint(pkMinus1X, pkMinus1Y, 'cyan');
+            drawPoint(pkPlus2X, pkPlus2Y, 'cyan');
+        }
         while(u <= 1){
             let xu = pkMinus1X * (-s * (u**3) + 2 * (s*(u**2)) - (s * u)) + pkX * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1X * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2X * (s * (u**3) - s* (u**2));
             let yu = pkMinus1Y * (-s * (u**3) + 2 * (s *(u**2)) - (s * u)) + pkY * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1Y * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2Y * (s * (u**3) - s* (u**2));
@@ -286,7 +302,16 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
             return f[n];
         }
     }();
+    //
     function drawCurveBezier(controls, segments, showPoints, showLine, showControl, lineColor) {
+        let p0x = controls[0][0];
+        let p1x = controls[1][0];
+        let p2x = controls[2][0];
+        let p3x = controls[3][0];
+        let p0y = controls[0][1];
+        let p1y = controls[1][1];
+        let p2y = controls[2][1];
+        let p3y = controls[3][1];
         let n = 3;
         let k = 0;
         let u = 0;
@@ -294,7 +319,9 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         let BEZ = (cnk) * (u**k) * (1 - u)**(n-k);
         while(k <= n){
             let b = BEZ;
-            
+            for(u = 0; u <= 1; u += 1/segments){
+
+            }
             k++;
         }
     }
@@ -307,7 +334,16 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
     //------------------------------------------------------------------
 
     function drawCurveBezierMatrix(controls, segments, showPoints, showLine, showControl, lineColor) {
-        
+        let p0x = controls[0][0];
+        let p1x = controls[1][0];
+        let p2x = controls[2][0];
+        let p3x = controls[3][0];
+        let p0y = controls[0][1];
+        let p1y = controls[1][1];
+        let p2y = controls[2][1];
+        let p3y = controls[3][1];
+        let u = 0;
+        //let xu = p0x * 
     }
 
     //------------------------------------------------------------------
