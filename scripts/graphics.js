@@ -62,6 +62,7 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
     // Helper function used to draw an X centered at a point.
     //
     //------------------------------------------------------------------
+
     function drawPoint(x, y, ptColor) {
         drawPixel(x - 1, y - 1, ptColor);
         drawPixel(x + 1, y - 1, ptColor);
@@ -69,14 +70,8 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         drawPixel(x + 1, y + 1, ptColor);
         drawPixel(x - 1, y + 1, ptColor);
     }
-
-    //------------------------------------------------------------------
-    //
-    // Bresenham line drawing algorithm.
-    //
-    //------------------------------------------------------------------
-    function drawLine(x1, y1, x2, y2, color) 
-	let distanceX = Math.abs(x2-x1);
+    function drawLine(x1, y1, x2, y2, color) {
+        let distanceX = Math.abs(x2-x1);
         let distanceY = Math.abs(y2-y1);
         let slope = distanceY/distanceX;
         let b = y1 - slope * x1;
@@ -84,6 +79,7 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         let y_k = y1;
         let c = 2 * distanceY + distanceX * (2*b - 1);
         let p_k = (2 * distanceY * x_k) - (2 * distanceX * y_k) + c;
+        
         if(x1 <= x2 && y2 <= y1 && distanceX < distanceY){ //if x and y are in octant 0
             [distanceX, distanceY] = [distanceY, distanceX]
             slope = distanceY/distanceX;
@@ -199,7 +195,7 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
                 }
                 x_k--;
             }
-        }{
+        }
     }
 
     //------------------------------------------------------------------
@@ -207,15 +203,73 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
     // Renders an Hermite curve based on the input parameters.
     //
     //------------------------------------------------------------------
-    function drawCurveHermite(controls, segments, showPoints, showLine, showControl, lineColor) {
-    }
 
+    function drawCurveHermite(controls, segments, showPoints, showLine, showControl, lineColor) {
+        let u = 0;
+        let p0_x = controls[0][0];
+        let p1_x = controls[1][0];
+        let p0_y = controls[0][1];
+        let p1_y = controls[1][1];
+        let prime0_x = controls[2][0];
+        let prime1_x = controls[3][0];
+        let prime0_y = controls[2][1];
+        let prime1_y = controls[3][1];
+        let tempX = p0_x;
+        let tempY = p0_y;
+        while(u <= 1){
+            let xu = p0_x * (2 * u**3 - 3 * u ** 2 + 1) + p1_x * (-2 * u**3 + 3 * u**2) + prime0_x * (u**3 - 2 * u**2 + u) + prime1_x * (u**3 - u**2);
+            let yu = p0_y * (2 * u**3 - 3 * u ** 2 + 1) + p1_y * (-2 * u**3 + 3 * u**2) + prime0_y * (u**3 - 2 * u**2 + u) + prime1_y * (u**3 - u**2);
+            if(showPoints){
+                drawPoint(xu, yu, "orange")
+            }
+            if(showLine && u > 0){
+                drawLine(tempX, tempY, xu, yu, lineColor);
+            }
+            // if(showControl){
+            //     drawPoint(controlX0, controlY0, 'white');
+            //     drawLine(xu, yu, controlX0, controlY0, 'orange');
+            // }
+            tempX = xu;
+            tempY = yu;
+            u += 1 / segments
+        }
+    }
     //------------------------------------------------------------------
     //
     // Renders a Cardinal curve based on the input parameters.
     //
     //------------------------------------------------------------------
+    
     function drawCurveCardinal(controls, segments, showPoints, showLine, showControl, lineColor) {
+        let u = 0;
+        let t = controls[4][0];
+        let s = (1 - t) / 2;
+        let pkMinus1X = controls[0][0];
+        let pkX = controls[1][0];
+        let pkPlus1X = controls[2][0];
+        let pkPlus2X = controls[3][0];
+        let pkMinus1Y = controls[0][1];
+        let pkY = controls[1][1];
+        let pkPlus1Y = controls[2][1];
+        let pkPlus2Y = controls[3][1];
+        let tempX = pkX;
+        let tempY = pkY;
+        while(u <= 1){
+            let xu = pkMinus1X * (-s * (u**3) + 2 * (s*(u**2)) - (s * u)) + pkX * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1X * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2X * (s * (u**3) - s* (u**2));
+            let yu = pkMinus1Y * (-s * (u**3) + 2 * (s *(u**2)) - (s * u)) + pkY * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1Y * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2Y * (s * (u**3) - s* (u**2));
+            if(showPoints){
+                drawPoint(xu, yu, 'yellow');
+            }
+            if(showLine && u > 0){
+                drawLine(tempX, tempY, xu, yu, lineColor);
+            }
+            
+            tempX = xu;
+            tempY = yu;
+            
+            u += 1 / segments
+        }
+
     }
 
     //------------------------------------------------------------------
@@ -223,7 +277,26 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
     // Renders a Bezier curve based on the input parameters.
     //
     //------------------------------------------------------------------
+    let factorial = function() {
+        let f = [1, 1];
+        return function inner(n){
+            if(n > f.length - 1){
+                f[n] = inner((n - 1) * n)
+            }
+            return f[n];
+        }
+    }();
     function drawCurveBezier(controls, segments, showPoints, showLine, showControl, lineColor) {
+        let n = 3;
+        let k = 0;
+        let u = 0;
+        let cnk = factorial(n) / (factorial(k) * factorial(n - k));
+        let BEZ = (cnk) * (u**k) * (1 - u)**(n-k);
+        while(k <= n){
+            let b = BEZ;
+            
+            k++;
+        }
     }
 
     //------------------------------------------------------------------
@@ -232,7 +305,9 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
     // This follows the Mathematics for Game Programmers form.
     //
     //------------------------------------------------------------------
+
     function drawCurveBezierMatrix(controls, segments, showPoints, showLine, showControl, lineColor) {
+        
     }
 
     //------------------------------------------------------------------
@@ -243,6 +318,7 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
     // to those not expert in JavaScript.
     //
     //------------------------------------------------------------------
+
     function drawCurve(type, controls, segments, showPoints, showLine, showControl, lineColor) {
         switch (type) {
             case api.Curve.Hermite:
