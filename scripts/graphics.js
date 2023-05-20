@@ -230,12 +230,16 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
             }
             tempX = xu;
             tempY = yu;
+            return u;
         }
         let memoizeHermite = function(){
             let memo = [];
+            let n = 0
             return function (u){
-                if(memo[u] === undefined){
-                    memo[u] = compute(u)
+                
+                if(memo[n] === undefined){
+                    memo[n] = compute(u);
+                    n++;
                 }
                 return memo[u];
             };
@@ -243,7 +247,7 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         let u = 0;
         while(u <= 1){
             memoizeHermite(u);
-            u += 1 / segments
+            u += 1 / segments;
         }
     }
     //------------------------------------------------------------------
@@ -253,9 +257,6 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
     //------------------------------------------------------------------
     
     function drawCurveCardinal(controls, segments, showPoints, showLine, showControl, lineColor) {
-        let u = 0;
-        let t = controls[4][0];
-        let s = (1 - t) / 2;
         let pkMinus1X = controls[0][0];
         let pkX = controls[1][0];
         let pkPlus1X = controls[2][0];
@@ -266,26 +267,40 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         let pkPlus2Y = controls[3][1];
         let tempX = pkX;
         let tempY = pkY;
-        if(showControl){
+        let xu = 0;
+        let yu = 0;
+        if (showControl) {
             drawPoint(pkMinus1X, pkMinus1Y, 'cyan');
             drawPoint(pkPlus2X, pkPlus2Y, 'cyan');
         }
-        while(u <= 1){
-            let xu = pkMinus1X * (-s * (u**3) + 2 * (s*(u**2)) - (s * u)) + pkX * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1X * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2X * (s * (u**3) - s* (u**2));
-            let yu = pkMinus1Y * (-s * (u**3) + 2 * (s *(u**2)) - (s * u)) + pkY * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1Y * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2Y * (s * (u**3) - s* (u**2));
-            if(showPoints){
+        let n = 0;
+        let compute = function(u) {
+            if (compute.memo === undefined) {
+                compute.memo = [];
+            }
+            if (compute.memo[n] === undefined) {
+                let t = controls[4][0];
+                let s = (1 - t) / 2;
+                xu = pkMinus1X * (-s * (u**3) + 2 * (s*(u**2)) - (s * u)) + pkX * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1X * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2X * (s * (u**3) - s* (u**2));
+                yu = pkMinus1Y * (-s * (u**3) + 2 * (s *(u**2)) - (s * u)) + pkY * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1Y * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2Y * (s * (u**3) - s* (u**2));
+                compute.memo[n] = [xu, yu];
+            }
+            n++;
+            return compute.memo[n - 1];
+        }
+        let u = 0;
+        while (u <= 1) {
+            let [xu, yu] = compute(u);
+            if (showPoints) {
                 drawPoint(xu, yu, 'yellow');
             }
-            if(showLine && u > 0){
+            if (showLine && u > 0) {
                 drawLine(tempX, tempY, xu, yu, lineColor);
             }
-            
             tempX = xu;
             tempY = yu;
-            
-            u += 1 / segments
+            u += 1 / segments;
         }
-
     }
 
     //------------------------------------------------------------------
@@ -293,36 +308,79 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
     // Renders a Bezier curve based on the input parameters.
     //
     //------------------------------------------------------------------
-    let factorial = function() {
-        let f = [1, 1];
-        return function inner(n){
-            if(n > f.length - 1){
-                f[n] = inner((n - 1) * n)
-            }
-            return f[n];
-        }
-    }();
-    //
     function drawCurveBezier(controls, segments, showPoints, showLine, showControl, lineColor) {
-        let p0x = controls[0][0];
         let p1x = controls[1][0];
         let p2x = controls[2][0];
-        let p3x = controls[3][0];
-        let p0y = controls[0][1];
         let p1y = controls[1][1];
         let p2y = controls[2][1];
-        let p3y = controls[3][1];
+        let tempX = 0;
+        let tempY = 0;
+        if(showControl){
+            drawPoint(p1x, p1y, 'cyan');
+            drawPoint(p2x, p2y, 'cyan');
+        }
         let n = 3;
-        let k = 0;
         let u = 0;
-        let cnk = factorial(n) / (factorial(k) * factorial(n - k));
-        let BEZ = (cnk) * (u**k) * (1 - u)**(n-k);
-        while(k <= n){
-            let b = BEZ;
-            for(u = 0; u <= 1; u += 1/segments){
-
+        let BlendC = function() {
+            let memo = [];
+            return function inner(n, k) {
+                if (n > memo.length - 1) {
+                    memo[n] = [];
+                }
+                if (memo[n][k] === undefined) {
+                    memo[n][k] = computeC(n, k);
+                }
+                return memo[n][k];
             }
-            k++;
+        }();
+        let BlendBEZ = function() {
+            let memo = [];
+            return function inner(n, k, u) {
+                if (memo[n] === undefined) {
+                    memo[n] = [];
+                }
+                if(memo[n][k] === undefined){
+                    memo[n][k] = [];
+                }
+                if (memo[n][k][u] === undefined) {
+                    memo[n][k][u] = computeBEZ(n, k, u);
+                }
+                return memo[n][k][u];
+            }
+        }();
+        let factorial = function() {
+            let f = [1, 1];
+            return function inner(n) {
+                if (n > f.length - 1) {
+                    f[n] = inner(n - 1) * n
+                }
+                return f[n];
+            }
+        }();
+        function computeC(n, k) {
+            return factorial(n) / (factorial(k) * factorial(n - k));
+        }
+        function computeBEZ(n, k, u) {
+            let c = BlendC(n, k);
+            return c * (u ** k) * ((1 - u) ** (n - k));
+        }
+        while(u <= 1){
+            let xu = 0;
+            let yu = 0;
+            for(let k = 0; k <= n; k++){
+                let BEZ = BlendBEZ(n, k, u);
+                xu += controls[k][0] * BEZ; 
+                yu += controls[k][1] * BEZ; 
+            }
+            if(showLine && u !== 0){
+                drawLine(tempX, tempY, xu, yu, lineColor);
+            }
+            if(showPoints){
+                drawPoint(xu, yu, 'yellow');
+            }
+            u += 1 / segments;
+            tempX = xu;
+            tempY = yu;
         }
     }
 
@@ -342,8 +400,40 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         let p1y = controls[1][1];
         let p2y = controls[2][1];
         let p3y = controls[3][1];
+        let tempX = p0x;
+        let tempY = p0y;
+        if(showControl){
+            drawPoint(p1x, p1y, 'cyan');
+            drawPoint(p2x, p2y, 'cyan');
+        }
+        let compute = function(u){
+            let xu = p0x * (u**3) + p1x * (-3 * (u**3) + 3 * (u**2)) + p2x * (3 * (u**3) - 6 * (u**2) + 3 * u) + p3x * (-1 * (u**3) + 3 * (u**2) - (3 * u) + 1);
+            let yu = p0y * (u**3) + p1y * (-3 * (u**3) + 3 * (u**2)) + p2y * (3 * (u**3) - 6 * (u**2) + 3 * u) + p3y * (-1 * (u**3) + 3 * (u**2) - (3 * u) + 1);
+            if(showPoints){
+                drawPoint(xu, yu, 'yellow');
+            }
+            if(showLine && u > 0){
+                drawLine(tempX, tempY, xu, yu, lineColor);
+            }
+            tempX = xu;
+            tempY = yu;
+        }
+        let memoizeBezierMatrix = function(){
+            let memo = [];
+            let n = 0;
+            return function (u){
+                if(memo[n] === undefined){
+                    memo[n] = compute(u);
+                    n++
+                }
+                return memo[u];
+            };
+        }();
         let u = 0;
-        //let xu = p0x * 
+        while(u <= 1){
+            memoizeBezierMatrix(u);
+            u += 1 / segments
+        }
     }
 
     //------------------------------------------------------------------
