@@ -215,13 +215,29 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         let prime1_y = controls[3][1];
         let tempX = p0_x;
         let tempY = p0_y;
+        let xu = 0;
+        let yu = 0;
         if(showControl){
             drawLine(p0_x, p0_y, p0_x + prime0_x, prime0_y, 'cyan');
             drawLine(p1_x, p1_y, p1_x + prime1_x, p1_y + prime1_y, 'cyan')
         }
-        let compute = function(u){
-            let xu = p0_x * (2 * u**3 - 3 * u ** 2 + 1) + p1_x * (-2 * u**3 + 3 * u**2) + prime0_x * (u**3 - 2 * u**2 + u) + prime1_x * (u**3 - u**2);
-            let yu = p0_y * (2 * u**3 - 3 * u ** 2 + 1) + p1_y * (-2 * u**3 + 3 * u**2) + prime0_y * (u**3 - 2 * u**2 + u) + prime1_y * (u**3 - u**2);
+        let compute = function(){
+            let memo = [];
+            return function inner(u){
+                if(memo === undefined){
+                    memo = [];
+                    memo[u] = [(2 * u**3 - 3 * u ** 2 + 1), (-2 * u**3 + 3 * u**2),  (u**3 - 2 * u**2 + u), (u**3 - u**2)];
+                }else if(memo[u] === undefined){
+                    memo[u] = [(2 * u**3 - 3 * u ** 2 + 1), (-2 * u**3 + 3 * u**2),  (u**3 - 2 * u**2 + u), (u**3 - u**2)];
+                }
+                return memo[u];
+            }
+        }();
+        let u = 0;
+        while(u <= 1){
+            let result = compute(u);
+            xu = p0_x * result[0] + p1_x * result[1] + prime0_x * result[2] + prime1_x * result[3];
+            yu = p0_y * result[0] + p1_y * result[1] + prime0_y * result[2] + prime1_y * result[3];
             if(showPoints){
                 drawPoint(xu, yu, "orange")
             }
@@ -230,23 +246,6 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
             }
             tempX = xu;
             tempY = yu;
-            return u;
-        }
-        let memoizeHermite = function(){
-            let memo = [];
-            let n = 0
-            return function (u){
-                
-                if(memo[n] === undefined){
-                    memo[n] = compute(u);
-                    n++;
-                }
-                return memo[u];
-            };
-        }();
-        let u = 0;
-        while(u <= 1){
-            memoizeHermite(u);
             u += 1 / segments;
         }
     }
@@ -273,24 +272,25 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
             drawPoint(pkMinus1X, pkMinus1Y, 'cyan');
             drawPoint(pkPlus2X, pkPlus2Y, 'cyan');
         }
-        let n = 0;
-        let compute = function(u) {
-            if (compute.memo === undefined) {
-                compute.memo = [];
-            }
-            if (compute.memo[n] === undefined) {
-                let t = controls[4][0];
+        let compute = function() {
+            let memo = [];
+            return function inner(u, t){
                 let s = (1 - t) / 2;
-                xu = pkMinus1X * (-s * (u**3) + 2 * (s*(u**2)) - (s * u)) + pkX * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1X * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2X * (s * (u**3) - s* (u**2));
-                yu = pkMinus1Y * (-s * (u**3) + 2 * (s *(u**2)) - (s * u)) + pkY * ((2 - s) * (u**3) + (s - 3) * (u**2) + 1) + pkPlus1Y * ((s - 2) * (u**3) + (3 - 2*s) * (u**2) + (s * u)) + pkPlus2Y * (s * (u**3) - s* (u**2));
-                compute.memo[n] = [xu, yu];
+                if (memo[u] === undefined) {
+                    memo[u] = [];
+                    memo[u][t] = [-s * (u**3) + 2 * (s * (u**2)) - (s * u), (2 - s) * (u**3) + (s - 3) * (u**2) + 1, (s - 2) * (u**3) + (3 - 2 * s) * (u**2) + s * u, s * (u**3) - s * (u**2)];
+                }else if(memo[u][t] === undefined){
+                    memo[u][t] = [-s * (u**3) + 2 * (s * (u**2)) - (s * u), (2 - s) * (u**3) + (s - 3) * (u**2) + 1, (s - 2) * (u**3) + (3 - 2 * s) * (u**2) + s * u, s * (u**3) - s * (u**2)];
+                }
+                return memo[u][t];
             }
-            n++;
-            return compute.memo[n - 1];
-        }
+        }();
         let u = 0;
+        let t = controls[4][0];
         while (u <= 1) {
-            let [xu, yu] = compute(u);
+            let result = compute(u, t);
+            xu = pkMinus1X * result[0] + pkX * result[1] + pkPlus1X * result[2] + pkPlus2X * result[3];
+            yu = pkMinus1Y * result[0] + pkY * result[1] + pkPlus1Y * result[2] + pkPlus2Y * result[3];
             if (showPoints) {
                 drawPoint(xu, yu, 'yellow');
             }
@@ -402,13 +402,29 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
         let p3y = controls[3][1];
         let tempX = p0x;
         let tempY = p0y;
+        let xu = 0;
+        let yu = 0;
         if(showControl){
             drawPoint(p1x, p1y, 'cyan');
             drawPoint(p2x, p2y, 'cyan');
         }
-        let compute = function(u){
-            let xu = p0x * (u**3) + p1x * (-3 * (u**3) + 3 * (u**2)) + p2x * (3 * (u**3) - 6 * (u**2) + 3 * u) + p3x * (-1 * (u**3) + 3 * (u**2) - (3 * u) + 1);
-            let yu = p0y * (u**3) + p1y * (-3 * (u**3) + 3 * (u**2)) + p2y * (3 * (u**3) - 6 * (u**2) + 3 * u) + p3y * (-1 * (u**3) + 3 * (u**2) - (3 * u) + 1);
+        let compute = function(){
+            let memo = [];
+            return function inner(u){
+                if(memo === undefined){
+                    memo = [];
+                    memo[u] = [(u**3), (-3 * (u**3) + 3 * (u**2)), (3 * (u**3) - 6 * (u**2) + 3 * u), (-1 * (u**3) + 3 * (u**2) - (3 * u) + 1)];
+                }else if(memo[u] === undefined){
+                    memo[u] = [(u**3), (-3 * (u**3) + 3 * (u**2)), (3 * (u**3) - 6 * (u**2) + 3 * u), (-1 * (u**3) + 3 * (u**2) - (3 * u) + 1)];
+                }
+                return memo[u];
+            }
+        }();
+        let u = 0;
+        while(u <= 1){
+            let result = compute(u);
+            xu = p0x * result[0] + p1x * result[1] + p2x * result[2] + p3x * result[3];
+            yu = p0y * result[0] + p1y * result[1] + p2y * result[2] + p3y * result[3];
             if(showPoints){
                 drawPoint(xu, yu, 'yellow');
             }
@@ -417,21 +433,6 @@ MySample.graphics = (function(pixelsX, pixelsY, showPixels) {
             }
             tempX = xu;
             tempY = yu;
-        }
-        let memoizeBezierMatrix = function(){
-            let memo = [];
-            let n = 0;
-            return function (u){
-                if(memo[n] === undefined){
-                    memo[n] = compute(u);
-                    n++
-                }
-                return memo[u];
-            };
-        }();
-        let u = 0;
-        while(u <= 1){
-            memoizeBezierMatrix(u);
             u += 1 / segments
         }
     }
