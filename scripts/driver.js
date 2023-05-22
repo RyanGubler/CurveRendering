@@ -260,13 +260,13 @@ MySample.main = (function(graphics) {
     //------------------------------------------------------------------
     function render() {
         graphics.clear();
-        graphics.drawCurve(graphics.Curve.Hermite, [[firstStart.x, firstStart.y], [firstEnd.x, firstEnd.y], [firstTanStart.x, firstTanStart.y], [firstTanEnd.x, firstTanEnd.y]], 50, true,true,true, "rgb(0, 255, 0)");
+        graphics.drawCurve(graphics.Curve.Hermite, [[firstStart.x, firstStart.y], [firstEnd.x, firstEnd.y], [firstTanStart.x, firstTanStart.y], [firstTanEnd.x, firstTanEnd.y]], 50, false,true,false, "rgb(0, 255, 0)");
         graphics.drawCurve(graphics.Curve.Bezier, [[bp0.x,bp0.y],[bp1.x,bp1.y],[bp2.x, bp2.y],[bp3.x, bp3.y]], 50, false,true,false, "rgb(120, 200, 50)");
         graphics.drawCurve(graphics.Curve.BezierMatrix, [[bmp0.x, bmp0.y], [bmp1.x, bmp1.y], [bmp2.x, bmp2.y], [bmp3.x, bmp3.y]], 50, false,true,false, "rgb(0, 0, 255)");
-        graphics.drawCurve(graphics.Curve.Cardinal, [[cp0.x, cp0.y], [cp1.x, cp1.y], [cp2.x, cp2.y], [cp3.x, cp3.y], [10]], 50, true, true, true, 'pink');
-        graphics.drawCurve(graphics.Curve.Cardinal, [[start.x - 50,start.y],[end.x,end.y],[startTan.x,startTan.y],[endTan.x- 50, endTan.y - 50], [tension]], 50, false,true,true, "rgb(255, 0, 0)");
+        graphics.drawCurve(graphics.Curve.Cardinal, [[cp0.x, cp0.y], [cp1.x, cp1.y], [cp2.x, cp2.y], [cp3.x, cp3.y], [10]], 50, false, true, false, 'pink');
+        graphics.drawCurve(graphics.Curve.Cardinal, [[start.x - 50,start.y],[end.x,end.y],[startTan.x,startTan.y],[endTan.x- 50, endTan.y - 50], [tension]], 50, false,true,false, "rgb(255, 0, 0)");
         graphics.drawCurve(graphics.Curve.Hermite, [[end.x, end.y],[endEnd.x, endEnd.y],[hermiteTanStart.x, hermiteTanStart.y], [hermiteTanEnd.x, hermiteTanEnd.y]], 50, false, true, false, 'white');
-        graphics.drawCurve(graphics.Curve.Cardinal, [[startTanCoord.x, startTanCoord.y],[startCoord.x, startCoord.y],[endCoord.x, endCoord.y],[endTanCoord.x, endTanCoord.y],[15]], 50, false, true, true, 'white');
+        graphics.drawCurve(graphics.Curve.Cardinal, [[startTanCoord.x, startTanCoord.y],[startCoord.x, startCoord.y],[endCoord.x, endCoord.y],[endTanCoord.x, endTanCoord.y],[15]], 50, false, true, false, 'white');
 
     }
 
